@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class EvolutionaryAlgorithm
@@ -48,6 +49,8 @@ public class EvolutionaryAlgorithm
         double y;
         double fitness;
         double fitnessProportion;
+        int rank;
+        double rankProportion;
         double commulativeProportion;
         public Individual(double x, double y, double fitness){
             this.x = x;
@@ -89,14 +92,26 @@ public class EvolutionaryAlgorithm
         while (true){
             if(hasNegativeFitness(individuals)) makeFitnessPositive(individuals);
 
-            addFitnessProportionOfEachIndv(individuals);
             addCommulativeFitnessProportionOfEachIndv(individuals);
+
+//            addCommulativeRankProportionOfEachIndv(individuals);
             while (newIndividuals.size()<noOfChildsToBeGenerated) {
                 //=====================
                 //Selection based on fitness proportion
                 Individual individual1 = selectByFitnessProportion(individuals);
                 Individual individual2 = selectByFitnessProportion(individuals);
                 if (individual1.equals(individual2)) individual2 = selectByFitnessProportion(individuals);
+                //=====================
+                //Selection based on Rank proportion
+//                Individual individual1 = selectByRankProportion(individuals);
+//                Individual individual2 = selectByRankProportion(individuals);
+//                if (individual1.equals(individual2)) individual2 = selectByRankProportion(individuals);
+                //=====================
+                //Selection based on binary tournament
+//                Individual individual1 = selectByBinaryTournament(individuals);
+//                individuals.remove(individual1);
+//                Individual individual2 = selectByBinaryTournament(individuals);
+//                individuals.remove(individual2);
                 //=====================
                 //random selection
 //                Individual individual1 = individuals.get(generateRandomIndexForSelectingIndividual());
@@ -267,6 +282,9 @@ public class EvolutionaryAlgorithm
     private static double getSumOfIndividualsFitness(List<Individual> individuals) {
         return individuals.stream().mapToDouble(individual -> individual.fitness).sum();
     }
+    private static double getSumOfIndividualsRank(List<Individual> individuals) {
+        return individuals.stream().mapToInt(individual -> individual.rank).sum();
+    }
 
 
     public void initializeIndividuals(){
@@ -304,7 +322,7 @@ public class EvolutionaryAlgorithm
         return true;
     }
     public void sortIndividuals(List<Individual> individuals){
-        Collections.sort(individuals, Collections.reverseOrder());
+        Collections.sort(individuals, Collections.reverseOrder()); //descending
     }
     public boolean hasNegativeFitness(List<Individual> individuals){
         for (Individual individual: individuals) {
@@ -325,16 +343,58 @@ public class EvolutionaryAlgorithm
             individual.fitnessProportion = individual.fitness / totalFitness;
         });
     }
-    public void addCommulativeFitnessProportionOfEachIndv(List<Individual> individuals){
+
+    private void addRankOfEachIndv(List<Individual> individuals) {
+        sortIndividuals(individuals);
+        AtomicInteger rank = new AtomicInteger(individuals.size());
+        individuals.forEach(individual -> {
+            individual.rankProportion = rank.get();
+            rank.getAndDecrement();
+        });
+    }
+    private void addRankProportionOfEachIndv(List<Individual> individuals) {
+        addRankOfEachIndv(individuals);
+        double totalRank = getSumOfIndividualsRank(individuals);
+        individuals.forEach(individual -> {
+            individual.rankProportion = individual.rank / totalRank;
+        });
+    }
+    public void addCommulativeRankProportionOfEachIndv(List<Individual> individuals){
+        addRankProportionOfEachIndv(individuals);
         AtomicReference<Double> cFP = new AtomicReference<>((double) 0);
-        double totalFitness = getSumOfIndividualsFitness(individuals);
+        individuals.forEach(individual -> {
+            individual.commulativeProportion = individual.rankProportion+ cFP.get();
+            cFP.set(individual.commulativeProportion);
+        });
+    }
+    public void addCommulativeFitnessProportionOfEachIndv(List<Individual> individuals){
+        addFitnessProportionOfEachIndv(individuals);
+        AtomicReference<Double> cFP = new AtomicReference<>((double) 0);
         individuals.forEach(individual -> {
             individual.commulativeProportion = individual.fitnessProportion+ cFP.get();
             cFP.set(individual.commulativeProportion);
         });
     }
     // add FP in Indv object as well as cp
+    public Individual selectByBinaryTournament(List<Individual> individuals) {
+        Individual individual1 = individuals.get(generateRandomIndexForSelectingIndividual());
+        int indexForSecondParent = generateRandomIndexForSelectingIndividual();
+        Individual individual2 = individuals.get(indexForSecondParent);
+        if (individual1.fitness > individual2.fitness) return individual1;
+        else return individual2;
+
+    }
     public Individual selectByFitnessProportion(List<Individual> individuals){
+
+        double lowerBound = 0;
+        double random = ThreadLocalRandom.current().nextDouble(0, individuals.get(individuals.size()-1).commulativeProportion + 0.00000001); // lower bound is inclusive, upper bound is exclusive
+        for (Individual individual: individuals){
+            if (random >lowerBound && random<= individual.commulativeProportion) return  individual;
+            lowerBound = individual.commulativeProportion;
+        }
+        return null;
+    }
+    public Individual selectByRankProportion(List<Individual> individuals){
 
         double lowerBound = 0;
         double random = ThreadLocalRandom.current().nextDouble(0, individuals.get(individuals.size()-1).commulativeProportion + 0.00000001); // lower bound is inclusive, upper bound is exclusive
