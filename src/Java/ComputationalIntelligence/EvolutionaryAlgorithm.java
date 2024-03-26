@@ -1,10 +1,7 @@
 package Java.ComputationalIntelligence;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -125,11 +122,20 @@ public class EvolutionaryAlgorithm
             parentAndChildren.addAll(individuals);
             parentAndChildren.addAll(newIndividuals);
             sortIndividuals(parentAndChildren);
+
+            // select indvs via FP
+//            selectedIndividuals = selectIndividualsByFitnessProportion(parentAndChildren,noOfIndividualsToBeSelected);
+            // select indvs via RP
+//            selectedIndividuals = selectIndividualsByRankProportion(parentAndChildren,noOfIndividualsToBeSelected);
+
             // selected top 10 fittest from parents and children
             selectedIndividuals = new ArrayList<>(parentAndChildren.subList(0,noOfIndividualsToBeSelected));
+
             fittestIndividualsOfEachGeneration.add(selectedIndividuals.get(0)); // fittest individual of new generation
+
             System.out.println("Selected New Individuals: "+selectedIndividuals);
             System.out.println("Avg fitness Individuals: "+avgFitnesstOfEachGeneration);
+
             avgFitnesstOfEachGeneration.add(calculateAverage(selectedIndividuals));
             if (avgFitnesstOfEachGeneration.size()>= 10 && isStoppingCriteria2Satisfied()) {
                 System.out.println("Criteria Satisfied");
@@ -172,6 +178,33 @@ public class EvolutionaryAlgorithm
             e.printStackTrace();
         }
 //        System.out.println("gjfj"+loadFromFile());
+    }
+
+    private List<Individual> selectIndividualsByFitnessProportion(List<Individual> parentAndChildren, int noOfIndividualsToBeSelected) {
+        List<Individual> selectedIndvs = new ArrayList<>();
+        Individual selectedIndv = null;
+        addCommulativeFitnessProportionOfEachIndv(individuals);
+        for (int i = 0; i < noOfIndividualsToBeSelected; i++) {
+            selectedIndv = selectByFitnessProportion(parentAndChildren);
+            if (selectedIndvs.contains(selectedIndv)) {
+                i--;
+                continue;
+            }else selectedIndvs.add(selectedIndv);
+        }
+        return selectedIndvs;
+    }
+    private List<Individual> selectIndividualsByRankProportion(List<Individual> parentAndChildren, int noOfIndividualsToBeSelected) {
+        List<Individual> selectedIndvs = new ArrayList<>();
+        Individual selectedIndv = null;
+        addCommulativeRankProportionOfEachIndv(parentAndChildren);
+        for (int i = 0; i < noOfIndividualsToBeSelected; i++) {
+            selectedIndv = selectByRankProportion(parentAndChildren);
+            if (selectedIndvs.contains(selectedIndv)) {
+                i--;
+                continue;
+            }else selectedIndvs.add(selectedIndv);
+        }
+        return selectedIndvs;
     }
 
 //    private Individual assignDifferentParent(Individual individual1) {
