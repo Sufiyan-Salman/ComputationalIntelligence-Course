@@ -18,8 +18,8 @@ def load_from_file(filename):
             values = [float(val) for val in line.strip().split()]
             generation.append(i)
             # y_values.append(values[1])
-            # fitness_values.append(values[1]) #for knapsack
             fitness_values.append(values[2]) #for knapsack
+            # fitness_values.append(values[2]) #for knapsack
             i += 1
             print(values)
     print(generation)
@@ -42,10 +42,10 @@ def plot_fitness_data(data):
     plt.colorbar(label='Fitness')
     plt.xticks(generation)
     # plt.show()
-    plt.savefig('fitness_plot.png')  # Save the plot to a file
+    plt.savefig('pngs/fitness_plot.png')  # Save the plot to a file
 
 
 if __name__ == "__main__":
-    filename = "/home/sufiyan/Desktop/Idea Projects/Learning/fitness_data.txt"
+    filename = "/home/sufiyan/Desktop/Idea Projects/Learning/src/fitness_data.txt"
     fitness_data = load_from_file(filename)
     plot_fitness_data(fitness_data)
