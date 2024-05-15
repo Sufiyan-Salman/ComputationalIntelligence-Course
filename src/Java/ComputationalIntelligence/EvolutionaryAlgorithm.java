@@ -11,7 +11,8 @@ public class EvolutionaryAlgorithm
     public static double stepSize = 0.15F;
     public static int noOfChildsToBeGenerated = 10;
     public static int noOfIndividualsToBeSelected = 10;
-    public static List<Individual> individuals = new ArrayList<>()
+    public static List<Individual> individuals = new ArrayList<>();
+    public static List<Individual> individualsForBinary = new ArrayList<>()
             ;
     public static List<Individual> newIndividuals = new ArrayList<>()
             ;
@@ -28,17 +29,17 @@ public class EvolutionaryAlgorithm
 //    public static double yLowerBound = -4.0;
     //==============================
     //Que 2
-//    public static double xUpperBound = 20;
-//    public static double yUpperBound = 25;
-//    public static double xLowerBound = -15;
-//    public static double yLowerBound = -20;
+    public static double xUpperBound = 20;
+    public static double yUpperBound = 25;
+    public static double xLowerBound = -15;
+    public static double yLowerBound = -20;
     //==============================
     // ==============================
     //Que 3
-    public static double xUpperBound = 15;
-    public static double yUpperBound = 20;
-    public static double xLowerBound = -15;
-    public static double yLowerBound = -25;
+//    public static double xUpperBound = 15;
+//    public static double yUpperBound = 20;
+//    public static double xLowerBound = -15;
+//    public static double yLowerBound = -25;
     //==============================
 //    public static double stepSize = 2.8;
     public static class Individual implements Comparable<Individual>, Serializable {
@@ -87,17 +88,19 @@ public class EvolutionaryAlgorithm
         avgFitnesstOfEachGeneration.add(calculateAverage(individuals));
 //        int randomIndex=0;
         while (true){
-            if(hasNegativeFitness(individuals)) makeFitnessPositive(individuals);
+//            if(hasNegativeFitness(individuals)) makeFitnessPositive(individuals); //we make the values positive only for RP and FP
 
-            addCommulativeFitnessProportionOfEachIndv(individuals);
+//            addCommulativeFitnessProportionOfEachIndv(individuals);
 
 //            addCommulativeRankProportionOfEachIndv(individuals);
+
+            individualsForBinary = new ArrayList<>(individuals);
             while (newIndividuals.size()<noOfChildsToBeGenerated) {
                 //=====================
                 //Selection based on fitness proportion
-                Individual individual1 = selectByFitnessProportion(individuals);
-                Individual individual2 = selectByFitnessProportion(individuals);
-                if (individual1.equals(individual2)) individual2 = selectByFitnessProportion(individuals);
+//                Individual individual1 = selectByFitnessProportion(individuals);
+//                Individual individual2 = selectByFitnessProportion(individuals);
+//                if (individual1.equals(individual2)) individual2 = selectByFitnessProportion(individuals);
                 //=====================
                 //Selection based on Rank proportion
 //                Individual individual1 = selectByRankProportion(individuals);
@@ -105,10 +108,10 @@ public class EvolutionaryAlgorithm
 //                if (individual1.equals(individual2)) individual2 = selectByRankProportion(individuals);
                 //=====================
                 //Selection based on binary tournament
-//                Individual individual1 = selectByBinaryTournament(individuals);
-//                individuals.remove(individual1);
-//                Individual individual2 = selectByBinaryTournament(individuals);
-//                individuals.remove(individual2);
+                Individual individual1 = selectByBinaryTournament(individualsForBinary);
+                individualsForBinary.remove(individual1);
+                Individual individual2 = selectByBinaryTournament(individualsForBinary);
+                individualsForBinary.remove(individual2);
                 //=====================
                 //random selection
 //                Individual individual1 = individuals.get(generateRandomIndexForSelectingIndividual());
@@ -116,7 +119,8 @@ public class EvolutionaryAlgorithm
 //                Individual individual2 = individuals.get(indexForSecondParent);
 //                if (individual1.equals(individual2)) individual2 = individuals.get((indexForSecondParent+1)%10);
                 //=====================
-                reproduceOneChild(individual1, individual2);
+                reproduce(individual1,individual2);
+//                reproduceOneChild(individual1, individual2);
             }
             List<Individual> parentAndChildren = new ArrayList<>();
             parentAndChildren.addAll(individuals);
@@ -125,10 +129,11 @@ public class EvolutionaryAlgorithm
 
             // select indvs via FP
 //            selectedIndividuals = selectIndividualsByFitnessProportion(parentAndChildren,noOfIndividualsToBeSelected);
+
             // select indvs via RP
 //            selectedIndividuals = selectIndividualsByRankProportion(parentAndChildren,noOfIndividualsToBeSelected);
 
-            // selected top 10 fittest from parents and children
+            // selected top 10 fittest from parents and children (Truncation Strategy)
             selectedIndividuals = new ArrayList<>(parentAndChildren.subList(0,noOfIndividualsToBeSelected));
 
             fittestIndividualsOfEachGeneration.add(selectedIndividuals.get(0)); // fittest individual of new generation
@@ -163,10 +168,10 @@ public class EvolutionaryAlgorithm
 
         }
         System.out.println("Fittest indv of each gen "+fittestIndividualsOfEachGeneration);
-        System.out.println("Avg fitness of each gen "+fittestIndividualsOfEachGeneration);
+//        System.out.println("Avg fitness of each gen "+fittestIndividualsOfEachGeneration);
 
         // Specify the file path
-        String filePath = "fitness_data.txt";
+        String filePath = "src/fitness_data.txt";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             // Iterate through the list and write each object's values to a new line in the file
@@ -186,10 +191,12 @@ public class EvolutionaryAlgorithm
         addCommulativeFitnessProportionOfEachIndv(individuals);
         for (int i = 0; i < noOfIndividualsToBeSelected; i++) {
             selectedIndv = selectByFitnessProportion(parentAndChildren);
-            if (selectedIndvs.contains(selectedIndv)) {
-                i--;
-                continue;
-            }else selectedIndvs.add(selectedIndv);
+//            if (selectedIndvs.contains(selectedIndv)) {
+//                i--;
+//                continue;
+//            }else
+            selectedIndvs.add(selectedIndv);
+            parentAndChildren.remove(selectedIndv);
         }
         return selectedIndvs;
     }
@@ -199,10 +206,13 @@ public class EvolutionaryAlgorithm
         addCommulativeRankProportionOfEachIndv(parentAndChildren);
         for (int i = 0; i < noOfIndividualsToBeSelected; i++) {
             selectedIndv = selectByRankProportion(parentAndChildren);
-            if (selectedIndvs.contains(selectedIndv)) {
-                i--;
-                continue;
-            }else selectedIndvs.add(selectedIndv);
+//            if (selectedIndvs.contains(selectedIndv)) {
+//                i--;
+//                continue;
+//            }else
+            selectedIndvs.add(selectedIndv);
+            parentAndChildren.remove(selectedIndv);
+
         }
         return selectedIndvs;
     }
@@ -277,9 +287,9 @@ public class EvolutionaryAlgorithm
             }
         }
     }
-    public int generateRandomIndexForSelectingIndividual() {
+    public int generateRandomIndexForSelectingIndividual(int upperBound) {
         // Modify the logic based on your specific conditions for allowing mutation
-       return ThreadLocalRandom.current().nextInt(0, 10);
+       return ThreadLocalRandom.current().nextInt(0, upperBound);
     }
     public int allowMutationBasedOnRandomNumber() {
     int randomNumber = ThreadLocalRandom.current().nextInt(1, 401);
@@ -303,8 +313,8 @@ public class EvolutionaryAlgorithm
     }
     public double calculateFitness(double x, double y){
 
-        return (100-Math.pow((x-(7*y)),2)+(8*Math.pow(y,2))-(6*x)); // Que 3 // FP
-//        return ((-7*(Math.pow(x,2)))+(3*x*(Math.sin(y)))-(786*y)+989); // Que 2
+//        return (100-Math.pow((x-(7*y)),2)+(8*Math.pow(y,2))-(6*x)); // Que 3 // FP
+        return ((-7*(Math.pow(x,2)))+(3*x*(Math.sin(y)))-(786*y)+989); // Que 2
 //        return (double) ((11*x)-(7.59*y)); // Que 1
     }
     public double calculateAverage(List<Individual> individuals){
@@ -410,8 +420,8 @@ public class EvolutionaryAlgorithm
     }
     // add FP in Indv object as well as cp
     public Individual selectByBinaryTournament(List<Individual> individuals) {
-        Individual individual1 = individuals.get(generateRandomIndexForSelectingIndividual());
-        int indexForSecondParent = generateRandomIndexForSelectingIndividual();
+        Individual individual1 = individuals.get(generateRandomIndexForSelectingIndividual(individuals.size()));
+        int indexForSecondParent = generateRandomIndexForSelectingIndividual(individuals.size());
         Individual individual2 = individuals.get(indexForSecondParent);
         if (individual1.fitness > individual2.fitness) return individual1;
         else return individual2;

@@ -165,7 +165,7 @@ public class EvolutionaryAlgorithmKnapSack
         System.out.println("Avg fitness of each gen "+avgFitnesstOfEachGeneration);
 
         // Specify the file path
-        String filePath = "fitness_data.txt";
+        String filePath = "src/knapsack_data.txt";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             // Iterate through the list and write each object's values to a new line in the file
@@ -370,6 +370,6 @@ public class EvolutionaryAlgorithmKnapSack
     }
     public void setItemsToBeSelectedForKnapSack(){
         //read from txt file
-        readItems("/home/sufiyan/Desktop/Idea Projects/Learning/problem knapsack.txt");
+        readItems("src/problem knapsack.txt");
     }
 }
